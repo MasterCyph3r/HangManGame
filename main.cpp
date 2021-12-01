@@ -8,44 +8,42 @@
 #define clear() system("clear");
 using namespace std;
 
-string getMask(const char* str);
-string updateMask(char guess, const char* str, const char* masked, int *tries, int *count);
+string getMask(string str);
+string updateMask(char guess, const char* str, string masked, int *tries, int *count);
 string setDifficulty(int *tries);
+vector<string> getList(const char* dif);
+int randNum(int max);
 
 int main(){
   clear();
   int tries = 8;
   int count = 0;
+  string input;
   string dif = setDifficulty(&tries);
   vector<char> guesses;
-  vector<string> list;
+  vector<string> list; //use this to load the list of words
 
-  
-  //grab the line from the word list
-  ifstream words(dif);
-  string temp;
-  while(getline(words, temp)){
-    list.push_back(temp);
-  }
-  words.close();
 
-//random number to choose line in file
-  srand((unsigned) time(0));
-  int line = rand()% list.size() + 1;
+    //grab the line from the word list
+    list = getList(dif.c_str());
+
+    //random number to choose line in file
+    int line = randNum(list.size()); //avg .0023638 time
 
   string str = list[line];
 
-  string masked = getMask(str.c_str());
+  string masked = getMask(str);
 
   while(tries>0 && count < str.length()){
     clear();
-      cout << "Welcome to Hangman\n" << endl;
-      
-      cout << "Tries: " << tries << "\n" << endl;
-      
+
+      cout << "Welcome to Hangman\n\n";
+
+      cout << "Tries: " << tries << "\n\n";
+
       cout << masked << endl;
-      
-      
+
+
       if(guesses.size()){
           cout << "\nUsed characters: ";
           for(int i = 0; i < guesses.size(); i++){
@@ -53,19 +51,18 @@ int main(){
           }
           cout << "\n" <<  endl;
       }
-      string guess;
-      cin >> guess;
+      cin >> input;
       cin.ignore();
-      if(guess.length() == 1){
+      if(input.length() == 1){
           bool dup = false;
           for(int i = 0; i < guesses.size(); i++){
-              if(guesses[i] == char(tolower(guess[0]))){
+              if(guesses[i] == char(tolower(input[0]))){
                   dup = true;
               }
           }
           if(!dup){
-          guesses.push_back(char(tolower(guess[0])));
-          masked = updateMask(guess[0], str.c_str(), masked.c_str(), &tries, &count);
+          guesses.push_back(char(tolower(input[0])));
+         masked = updateMask(char(tolower(input[0])), str.c_str(), masked, &tries, &count); //masked.c_str()
 
           //sort the vector of guesses
           int temp;
@@ -80,7 +77,7 @@ int main(){
           }
           }
       }
-      
+
     }
     clear();
   if(count == str.length()){
@@ -91,15 +88,35 @@ int main(){
   }
 
   cout << "\nPlay Again? [y]es or [n]o" << endl;
-  string again;
-  cin >> again; cin.ignore();
-  if(tolower(again[0]) == 'y'){
+  cin >> input; cin.ignore();
+  if(tolower(input[0]) == 'y'){
     main();
   }
   else{
     return 0;
   }
 }
+
+//load the word file
+vector<string> getList(const char* dif){
+    vector<string> list;
+    ifstream words(dif);
+    string temp;
+    while(getline(words, temp)){
+        list.push_back(temp);
+    }
+    words.close();
+    return list;
+}
+
+//generate random number to get word from file == line in list
+int randNum(int max){
+    srand((unsigned) time(0));
+    int line = rand()% max + 1;
+
+    return line;
+}
+
 //setting difficulty
 string setDifficulty(int *tries){
   while(true){
@@ -121,38 +138,35 @@ string setDifficulty(int *tries){
   }  }
 }
 
-//masking the word
-string getMask(const char* str){
-    string masked = string(str);
-    masked += masked;
-    for(int i = 0; i < masked.length(); i++){
+string getMask(string str){
+    str += str;
+    int len = str.length();
+    for(int i = 0; i < len; i++){
         if(i%2){
-            masked[i] = ' ';
+            str[i] = ' ';
         }
         else{
-            masked[i] = '_';
+            str[i] = '_';
         }
     }
-    
-    return masked;
-}
 
+    return str;
+}
 // update the console and masked word if letter is correct
-string updateMask(char guess, const char* str, const char* masked, int *tries, int *count){
-    string mask = string(masked);
+string updateMask(char guess, const char* str, string masked, int *tries, int *count){
     bool correct = false;
- for(int i = 0; i < string(str).length(); i++){
-     if(str[i]==char(tolower(guess))){
-         mask[i*2] = char(tolower(guess));
-         correct = true;
-         *count += 1;
-     }
+    int len = string(str).length();
+     for(int i = 0; i < len; i++){
+         if(str[i] == guess){
+             masked[i*2] = guess;
+             correct = true;
+             *count += 1;
+         }
  }
  if(!correct){
      *tries = *tries-1;
  }
- return mask;
+ return masked;
 }
-
 
 //eventually i'll replace the one word with puzzles from wheeloffortuneanswer.com
